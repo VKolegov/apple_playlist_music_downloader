@@ -120,13 +120,16 @@ def main():
     # читаем CSV
     df = pd.read_csv(input_file, sep=";", encoding="utf-8-sig")
 
+    # Нормализуем названия колонок к нижнему регистру
+    df.columns = df.columns.str.lower().str.strip()
+
     for _, row in df.iterrows():
-        title = str(row.get("Название", "")).strip()
-        artist = str(row.get("Артист", "")).strip()
-        album = str(row.get("Альбом", "")).strip() if "Альбом" in row and pd.notna(row.get("Альбом")) else ""
-        genre = str(row.get("Жанр", "")).strip() if "Жанр" in row and pd.notna(row.get("Жанр")) else ""
-        year = str(row.get("Год", "")).strip() if "Год" in row and pd.notna(row.get("Год")) else ""
-        youtube_url = str(row.get("YouTube URL", "")).strip() if "YouTube URL" in row and pd.notna(row.get("YouTube URL")) else ""
+        title = str(row.get("название", "")).strip()
+        artist = str(row.get("артист", "")).strip()
+        album = str(row.get("альбом", "")).strip() if "альбом" in row and pd.notna(row.get("альбом")) else ""
+        genre = str(row.get("жанр", "")).strip() if "жанр" in row and pd.notna(row.get("жанр")) else ""
+        year = str(row.get("год", "")).strip() if "год" in row and pd.notna(row.get("год")) else ""
+        youtube_url = str(row.get("youtube url", "")).strip() if "youtube url" in row and pd.notna(row.get("youtube url")) else ""
         if not title:
             continue
 
