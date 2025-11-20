@@ -1,2 +1,3 @@
 pandas
 mutagen
+yt_dlp
