@@ -41,23 +41,35 @@ def add_metadata(filepath: str, title: str, artist: str, album: str = "", genre:
     except Exception as e:
         print(f"   ⚠️ Ошибка при добавлении метаданных: {e}")
 
-def download_track(title: str, artist: str, output_path: str, album: str = "", genre: str = "", year: str = ""):
+def download_track(title: str, artist: str, output_path: str, album: str = "", genre: str = "", year: str = "", youtube_url: str = ""):
     """
-    Скачивает трек с YouTube (первый результат поиска) в mp3
+    Скачивает трек с YouTube в mp3
+    Если указан youtube_url, использует прямую ссылку, иначе ищет по запросу
+
+    Возвращает True если файл был скачан, False если был пропущен
     """
-    query = f"{title} {artist} audio"
     filename = sanitize_filename(f"{artist} - {title}.mp3")
     filepath = os.path.join(output_path, filename)
 
     # если уже существует — пропускаем
     if os.path.exists(filepath):
         print(f"⏭ Пропущено (уже есть): {filename}")
-        return
+        return False
 
     try:
+        # Если есть прямая ссылка, используем её
+        if youtube_url and youtube_url.strip():
+            source = youtube_url.strip()
+            print(f"🔗 Загрузка по прямой ссылке: {filename}")
+        else:
+            # Иначе ищем на YouTube
+            query = f"{title} {artist} audio"
+            source = f"ytsearch1:{query}"
+            print(f"🔍 Поиск и загрузка: {filename}")
+
         cmd = [
             "yt-dlp",
-            f"ytsearch1:{query}",   # поиск и взять только первый результат
+            source,
             "-x",                  # извлечь аудио
             "--audio-format", "mp3",
             "-o", filepath,
@@ -69,8 +81,13 @@ def download_track(title: str, artist: str, output_path: str, album: str = "", g
 
         # Добавляем метаданные
         add_metadata(filepath, title, artist, album, genre, year)
+        return True
     except subprocess.CalledProcessError:
-        print(f"❌ Ошибка при загрузке: {query}")
+        if youtube_url and youtube_url.strip():
+            print(f"❌ Ошибка при загрузке по ссылке: {youtube_url}")
+        else:
+            print(f"❌ Ошибка при загрузке: {title} {artist}")
+        return False
 
 def main():
     # ищем все csv в папке
@@ -109,15 +126,17 @@ def main():
         album = str(row.get("Альбом", "")).strip() if "Альбом" in row and pd.notna(row.get("Альбом")) else ""
         genre = str(row.get("Жанр", "")).strip() if "Жанр" in row and pd.notna(row.get("Жанр")) else ""
         year = str(row.get("Год", "")).strip() if "Год" in row and pd.notna(row.get("Год")) else ""
+        youtube_url = str(row.get("YouTube URL", "")).strip() if "YouTube URL" in row and pd.notna(row.get("YouTube URL")) else ""
         if not title:
             continue
 
-        download_track(title, artist, output_dir, album, genre, year)
+        was_downloaded = download_track(title, artist, output_dir, album, genre, year, youtube_url)
 
-        # задержка 5-10 секунд
-        delay = random.randint(5, 10)
-        print(f"⏳ Ждём {delay} секунд перед следующим треком...")
-        time.sleep(delay)
+        # задержка 5-10 секунд только если файл был реально скачан
+        if was_downloaded:
+            delay = random.randint(5, 10)
+            print(f"⏳ Ждём {delay} секунд перед следующим треком...")
+            time.sleep(delay)
 
 if __name__ == "__main__":
     main()

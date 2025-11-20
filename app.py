@@ -15,9 +15,13 @@ def sanitize_playlist(input_file, output_file):
     keep = [col for col in KEEP_COLUMNS if col in df.columns]
     clean_df = df[keep]
 
+    # добавляем пустую колонку для YouTube URL (можно заполнить вручную)
+    clean_df["YouTube URL"] = ""
+
     # сохраняем в CSV с ; как разделителем
     clean_df.to_csv(output_file, sep=";", index=False, encoding="utf-8-sig")
     print(f"✅ Санитизированный плейлист сохранён в {output_file}")
+    print(f"💡 Вы можете добавить прямые ссылки YouTube в колонку 'YouTube URL' для нужных треков")
 
 def main():
     # ищем все .txt в текущей папке
